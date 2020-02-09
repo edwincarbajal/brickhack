@@ -1,0 +1,2 @@
+# brickhack
+BrickHack @ RIT
