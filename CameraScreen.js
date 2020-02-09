@@ -1,15 +1,20 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions, Image  } from 'react-native';
+import React, { Component } from 'react';
+import { View, Text, StyleSheet, Dimensions, Image,SafeAreaView   } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as Permissions from 'expo-permissions';
+import ToggleSwitch from 'toggle-switch-react-native'
+import { BarCodeScanner } from 'expo-barcode-scanner';
 const { width: winWidth, height: winHeight } = Dimensions.get('window');
 
 import Toolbar from './components/Toolbar';
 import Gallery from './components/Gallery';
+import Toggle from './components/Toggle';
+import BarcodeScreen from './BarcodeScreen';
 
-class CameraScreen extends React.Component {
+class CameraScreen extends Component {
   camera = null;
   state = {
+    toggle: false,
     path: null,
     captures: [],
     // setting flash to be turned off by default
@@ -24,21 +29,44 @@ class CameraScreen extends React.Component {
   setCameraType = (cameraType) => this.setState({ cameraType });
   handleCaptureIn = () => this.setState({ capturing: true });
 
-  handleCaptureOut = () => {
-    if (this.state.capturing)
-      this.camera.stopRecording();
-  };
-
   handleShortCapture = async () => {
-    const photoData = await this.camera.takePictureAsync();
+    const photoData = await this.camera.takePictureAsync({base64: true});
     this.setState({ path: photoData.uri, capturing: false, captures: [photoData, ...this.state.captures] });
-    console.log(this.state.captures);
+    let body = JSON.stringify({
+      requests: [
+        {
+          'features': [
+            {
+              'type': 'LABEL_DETECTION',
+              "maxResults": 1,
+            }
+          ],
+          "image": {
+            "content": photoData.base64
+          },
+        }
+      ]
+    });
+    let response = await fetch(
+     `https://vision.googleapis.com/v1/images:annotate?key=${(REACT_GOOGLE_VISION_API_KEY}`,
+     {
+       headers: {
+         Accept: "application/json",
+         "Content-Type": "application/json"
+       },
+       method: "POST",
+       body: body
+     }
+   );
+   let responseJson = await response.json();
+   console.log(responseJson)
   };
 
   async componentDidMount() {
     const camera = await Permissions.askAsync(Permissions.CAMERA);
     const audio = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
-    const hasCameraPermission = (camera.status === 'granted' && audio.status === 'granted');
+    const barcode = await BarCodeScanner.requestPermissionsAsync();
+    const hasCameraPermission = (camera.status === 'granted' && audio.status === 'granted' && barcode.status === 'granted');
     this.setState({ hasCameraPermission });
   };
 
@@ -51,6 +79,15 @@ class CameraScreen extends React.Component {
         style={styles.preview}
         ref={camera => this.camera = camera}
       >
+        <Toggle>
+          <ToggleSwitch
+            isOn={this.state.toggle}
+            onColor="green"
+            offColor="red"
+            label=""
+            onToggle={isOn => this.setState({toggle: isOn})}
+          />
+        </Toggle>
         <Toolbar
           capturing={capturing}
           flashMode={flashMode}
@@ -91,7 +128,10 @@ class CameraScreen extends React.Component {
     }
     return (
       <View>
-        {this.state.path ? this.renderImage() : this.renderCamera()}
+        {this.state.toggle ?
+          this.state.path ? this.renderImage() : <BarcodeScreen /> :
+          this.state.path ? this.renderImage() : this.renderCamera()
+        }
       </View>
     );
   };
