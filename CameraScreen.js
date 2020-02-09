@@ -4,8 +4,8 @@ import { Camera } from 'expo-camera';
 import * as Permissions from 'expo-permissions';
 const { width: winWidth, height: winHeight } = Dimensions.get('window');
 
-import Toolbar from './Toolbar';
-import Gallery from './Gallery';
+import Toolbar from './components/Toolbar';
+import Gallery from './components/Gallery';
 
 class CameraScreen extends React.Component {
   camera = null;

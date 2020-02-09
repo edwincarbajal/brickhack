@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Image, ScrollView, StyleSheet } from 'react-native';
 
-
 export default ({captures=[]}) => {
     return (
         <ScrollView
