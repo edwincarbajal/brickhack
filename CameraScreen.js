@@ -73,7 +73,6 @@ class CameraScreen extends React.Component {
           setCameraType={this.setCameraType}
           onCaptureIn={this.handleCaptureIn}
           onCaptureOut={this.handleCaptureOut}
-          onLongCapture={this.handleLongCapture}
           onShortCapture={this.handleShortCapture}
         />
       </React.Fragment>
